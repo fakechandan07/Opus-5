@@ -705,10 +705,10 @@ function buildTextures(){
   /* ---- asphalt */
   {
     const c=cv(64,64),x=c.getContext("2d");
-    x.fillStyle="#42423e";x.fillRect(0,0,64,64);
+    x.fillStyle="#63635c";x.fillRect(0,0,64,64);
     for(let i=0;i<340;i++){const px=(hash2(i,1)*64)|0,py=(hash2(i,2)*64)|0,v=hash2(i,3);
-      x.fillStyle="rgba("+(v>0.6?"90,90,86":"38,38,35")+",0.5)";x.fillRect(px,py,1,1);}
-    for(let i=0;i<7;i++){const py=(hash2(i,9)*64)|0;x.fillStyle="rgba(28,28,26,0.35)";x.fillRect(0,py,64,1);}
+      x.fillStyle="rgba("+(v>0.6?"124,124,118":"66,66,62")+",0.45)";x.fillRect(px,py,1,1);}
+    for(let i=0;i<7;i++){const py=(hash2(i,9)*64)|0;x.fillStyle="rgba(52,52,48,0.30)";x.fillRect(0,py,64,1);}
     TEX.road=mkTex(c);
   }
   /* ---- dirt track */
@@ -784,7 +784,7 @@ function buildMaterials(){
   MAT.water =new THREE.MeshLambertMaterial({map:TEX.water,transparent:true,opacity:0.86,color:0xffffff});
   MAT.glow  =new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:0.9});
   MAT.shadow=new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.3,depthWrite:false});
-  MAT.marker=new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:0.66,side:THREE.DoubleSide,depthWrite:false});
+  MAT.marker=new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:0.44,side:THREE.DoubleSide,depthWrite:false});
   MAT.lamp  =new THREE.MeshLambertMaterial({vertexColors:true,emissive:0xffe0a0,emissiveIntensity:0});
   MAT.neon  =new THREE.MeshBasicMaterial({vertexColors:true});
   MAT.pool  =new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:0,
@@ -852,11 +852,12 @@ class MeshBuilder{
       const A=[cx+c0*r1,y0,cz+s0*r1],B=[cx+c1*r1,y0,cz+s1*r1];
       const C=[cx+c1*r2,y1,cz+s1*r2],D=[cx+c0*r2,y1,cz+s0*r2];
       const u0=i/seg,u1=(i+1)/seg;
-      if(r1>0.0001&&r2>0.0001) this.quad(A,B,C,D,col,[u0,0,u1,0,u1,1,u0,1]);
-      else if(r1>0.0001) this.tri(A,B,[cx,y1,cz],col);
-      else this.tri([cx,y0,cz],C,D,col);
+      /* wound so the face normals point outward / upward */
+      if(r1>0.0001&&r2>0.0001) this.quad(A,D,C,B,col,[u0,0,u0,1,u1,1,u1,0]);
+      else if(r1>0.0001) this.tri(A,[cx,y1,cz],B,col);
+      else this.tri([cx,y0,cz],D,C,col);
       if(!o.noTop&&r2>0.0001) this.tri([cx,y1,cz],C,D,top);
-      if(o.bottom&&r1>0.0001) this.tri([cx,y0,cz],B,A,top);
+      if(o.bottom&&r1>0.0001) this.tri([cx,y0,cz],A,B,top);
     }
   }
   /* pitched roof over an x/z footprint; ridge runs along x when alongX */
@@ -870,10 +871,10 @@ class MeshBuilder{
       this.tri([cx+hx,cy,cz+hz],[cx+hx,cy,cz-hz],r1,shade(col,0.85));
     }else{
       const r0=[cx,cy+h,cz-hz],r1=[cx,cy+h,cz+hz];
-      this.quad([cx+hx,cy,cz-hz],[cx+hx,cy,cz+hz],r1,r0,col);
-      this.quad([cx-hx,cy,cz+hz],[cx-hx,cy,cz-hz],r0,r1,col);
-      this.tri([cx-hx,cy,cz-hz],[cx+hx,cy,cz-hz],r0,shade(col,0.85));
-      this.tri([cx+hx,cy,cz+hz],[cx-hx,cy,cz+hz],r1,shade(col,0.85));
+      this.quad([cx+hx,cy,cz+hz],[cx+hx,cy,cz-hz],r0,r1,col);
+      this.quad([cx-hx,cy,cz-hz],[cx-hx,cy,cz+hz],r1,r0,col);
+      this.tri([cx+hx,cy,cz-hz],[cx-hx,cy,cz-hz],r0,shade(col,0.85));
+      this.tri([cx-hx,cy,cz+hz],[cx+hx,cy,cz+hz],r1,shade(col,0.85));
     }
   }
   /* flat ground-hugging strip between two points, subdivided so it follows terrain */
@@ -988,11 +989,11 @@ function initThree(){
   G.sunLight=new THREE.DirectionalLight(0xfff0cc,1.15);
   G.sunLight.position.set(120,200,90);
   G.sunLight.shadow.mapSize.set(1024,1024);
-  G.sunLight.shadow.camera.left=-46;G.sunLight.shadow.camera.right=46;
-  G.sunLight.shadow.camera.top=46;G.sunLight.shadow.camera.bottom=-46;
+  G.sunLight.shadow.camera.left=-36;G.sunLight.shadow.camera.right=36;
+  G.sunLight.shadow.camera.top=36;G.sunLight.shadow.camera.bottom=-36;
   G.sunLight.shadow.camera.near=1;G.sunLight.shadow.camera.far=330;
   G.sunLight.shadow.bias=-0.0006;
-  G.sunLight.shadow.normalBias=0.08;
+  G.sunLight.shadow.normalBias=0.18;
   G.scene.add(G.sunLight);G.scene.add(G.sunLight.target);
   G.ambient=new THREE.AmbientLight(0x404840,0.35);G.scene.add(G.ambient);
 
@@ -1065,8 +1066,13 @@ function updateSky(dt){
   G.skyUni.bot.value.setHex(mixHex(a.bot,b.bot,f)).multiplyScalar(rainDim);
   G.skyUni.sunCol.value.setHex(mixHex(a.sun,b.sun,f));
   const fogc=mixHex(a.fog,b.fog,f);
-  G.scene.fog.color.setHex(fogc).multiplyScalar(rainDim);
-  G.renderer.setClearColor(G.scene.fog.color);
+  if(G.interior){
+    G.scene.fog.color.setHex(0x14140f);
+    G.renderer.setClearColor(0x14140f);
+  }else{
+    G.scene.fog.color.setHex(fogc).multiplyScalar(rainDim);
+    G.renderer.setClearColor(G.scene.fog.color);
+  }
   /* sun travels a tilted arc; noon at t=0.5 */
   const ang=(t-0.25)*TAU;
   const sd=G.tmpV.set(Math.cos(ang)*0.86,Math.sin(ang),0.34).normalize();
@@ -1082,6 +1088,14 @@ function updateSky(dt){
   const nf=clamp01((0.16-sd.y)*3.2);
   G.ambient.intensity=0.32+nf*0.30;
   G.ambient.color.setHex(mixHex(0x404840,0x38507e,nf));
+  if(G.interior){
+    /* interiors are lit by their own fittings, not by the county sky */
+    G.hemi.color.setHex(0xfff0d8);G.hemi.groundColor.setHex(0x4a4032);G.hemi.intensity=1.05;
+    G.ambient.color.setHex(0xffeeD8);G.ambient.intensity=0.50;
+    G.sunLight.color.setHex(0xfff4e0);G.sunLight.intensity=0.55;
+    G.sunLight.position.set(px+26,140,pz+18);
+    G.sunLight.target.position.set(px,0,pz);
+  }
   G.sunSprite.position.set(px+sd.x*1100,sd.y*1100,pz+sd.z*1100);
   G.sunSprite.visible=sd.y>-0.12;
   G.moonSprite.position.set(px-sd.x*1100,-sd.y*1100,pz-sd.z*1100);
@@ -1096,6 +1110,8 @@ function updateSky(dt){
   if(MAT.pool) MAT.pool.opacity=night*0.85;
   if(MAT.sign){const se=0.15+night*0.85;MAT.sign.emissive.setRGB(se,se,se);}
   G.stars.material.opacity=night*0.9;
+  /* sky dome and stars must ride with the camera or the gradient shears off-centre */
+  G.sky.position.set(px,0,pz);
   G.stars.position.set(px,0,pz);
   /* weather */
   G.weather.next-=dt;
@@ -1220,7 +1236,7 @@ function B(x,z,layer){
   if(!c[layer])c[layer]=new MeshBuilder();
   return c[layer];
 }
-const LAYER_MAT={facade:"facade",plain:"plain",road:"road",metal:"metal",brick:"brick",dirt:"dirt",lamp:"lamp",neon:"neon",sign:"sign",pool:"pool"};
+const LAYER_MAT={facade:"facade",plain:"plain",road:"road",metal:"metal",brick:"brick",dirt:"dirt",lamp:"lamp",neon:"neon",sign:"sign",pool:"pool",terrain:"terrain"};
 function bakeChunks(){
   let tris=0,meshes=0;
   for(const k in CB){
@@ -1278,16 +1294,17 @@ function terrainColor(x,z){
   else if(h<CFG.WATER_Y+4.5) c=mixHex(0xc9ba8c,c,clamp01((h-CFG.WATER_Y-0.5)/4));
   if(h>24) c=mixHex(c,0x82805c,clamp01((h-24)/26));
   const n=hash2(Math.floor(x*0.24)+911,Math.floor(z*0.24)+17);
-  return shade(c,0.85+n*0.30);
+  return shade(c,0.93+n*0.15);
 }
 function genTerrain(){
   const step=25,N=CFG.W*2/step;
   for(let i=0;i<N;i++)for(let j=0;j<N;j++){
     const x0=-CFG.W+i*step, z0=-CFG.W+j*step, x1=x0+step, z1=z0+step;
-    const b=B(x0+step/2,z0+step/2,"plain");
+    const b=B(x0+step/2,z0+step/2,"terrain");
     const A=[x0,heightAt(x0,z0),z0],Bv=[x1,heightAt(x1,z0),z0],C=[x1,heightAt(x1,z1),z1],D=[x0,heightAt(x0,z1),z1];
     const col=terrainColor(x0+step/2,z0+step/2);
-    b.quad(A,Bv,C,D,col);
+    const u0=x0/13,v0=z0/13,u1=x1/13,v1=z1/13;
+    b.quad(A,D,C,Bv,col,[u0,v0,u0,v1,u1,v1,u1,v0]);
   }
 }
 
@@ -1384,7 +1401,7 @@ function genRoads(){
   /* --- road surface --- */
   for(const r of roads){
     const layer=r.kind==="dirt"?"dirt":"road";
-    const col=r.kind==="alley"?0x8d8d88:(r.kind==="dirt"?0xd8c8a4:0xa0a09a);
+    const col=r.kind==="alley"?0xc4c4be:(r.kind==="dirt"?0xf2e8d4:0xe6e6de);
     const mx=(r.x1+r.x2)/2,mz=(r.z1+r.z2)/2;
     const b=B(mx,mz,layer);
     b.strip(r.x1,r.z1,r.x2,r.z2,r.w,col,0.03,r.kind==="dirt"?9:8);
@@ -1392,7 +1409,7 @@ function genRoads(){
   /* --- intersection patches --- */
   for(const it of inters){
     const b=B(it.x,it.z,"road");
-    b.strip(it.x-it.w/2,it.z,it.x+it.w/2,it.z,it.w,0x9b9b96,0.055,8);
+    b.strip(it.x-it.w/2,it.z,it.x+it.w/2,it.z,it.w,0xdedeD6,0.055,8);
   }
   /* --- lane markings, pavements, crosswalks --- */
   for(let i=0;i<roads.length;i++){
@@ -1527,26 +1544,27 @@ function addDeck(x1,z1,x2,z2,w,y,col){
 function genElevated(){
   /* Sunridge Skyway: elevated spur over the Ironworks */
   const y=11;
-  addDeck(150,-300,450,-300,15,y,0x97978f);
+  addDeck(150,-300,450,-300,15,y,0xdcdcd4);
   const pb=B(110,-300,"road");
-  pb.strip(70,-300,150,-300,15,0x9c9c96,0.05,8);   // approach at ground level is a normal strip
+  pb.strip(70,-300,150,-300,15,0xe6e6de,0.05,8);   // approach at ground level is a normal strip
   /* ramps: visible slope + stepped colliders */
   function ramp(x1,x2){
     const rb=B((x1+x2)/2,-300,"road");
     const y1=heightAt(x1,-300)+0.06,y2=y;
-    rb.quad([x1,y1,-300-7.5],[x2,y2,-300-7.5],[x2,y2,-300+7.5],[x1,y1,-300+7.5],0x9c9c96,[0,0,0,10,2,10,2,0]);
+    rb.quad([x1,y1,-300-7.5],[x2,y2,-300-7.5],[x2,y2,-300+7.5],[x1,y1,-300+7.5],0xe6e6de,[0,0,0,10,2,10,2,0]);
+    rb.quad([x1,y1,-300+7.5],[x2,y2,-300+7.5],[x2,y2,-300-7.5],[x1,y1,-300-7.5],0xe6e6de,[0,0,0,10,2,10,2,0]);
     addRampColliders(x1,-300,y1,x2,-300,y2,15);
     const gb=B((x1+x2)/2,-300,"plain");
     for(const sgn of [1,-1]) gb.box((x1+x2)/2,(y1+y2)/2+0.5,-300+sgn*7.6,Math.abs(x2-x1),1.0,0.5,0xb0ac98,{bottom:true});
   }
   ramp(88,150);ramp(512,450);
-  addDeck(450,-300,512,-300,15,y,0x97978f);
+  addDeck(450,-300,512,-300,15,y,0xdcdcd4);
   /* Harbour causeway out to the lighthouse */
   const cy=1.4;
   addRampColliders(300,-452,0.1,300,-466,cy,11);
   const rb=B(300,-459,"road");
-  rb.quad([294.5,0.08,-452],[294.5,cy,-466],[305.5,cy,-466],[305.5,0.08,-452],0x9c9c96,[0,0,0,2,1.4,2,1.4,0]);
-  addDeck(300,-466,300,-596,11,cy,0x94948c);
+  rb.quad([294.5,0.08,-452],[294.5,cy,-466],[305.5,cy,-466],[305.5,0.08,-452],0xe6e6de,[0,0,0,2,1.4,2,1.4,0]);
+  addDeck(300,-466,300,-596,11,cy,0xd6d6ce);
   /* pier posts */
   for(let z=-470;z>=-596;z-=13){
     const b=B(300,z,"plain");
@@ -1654,8 +1672,10 @@ function addPalm(x,z,s){
   for(let i=0;i<7;i++){
     const a=i/7*TAU+R();
     const ex=x+Math.cos(a)*2.6*s, ez=z+Math.sin(a)*2.6*s;
-    b.tri([x,y+th+0.4*s,z],[ex+Math.sin(a)*0.5,y+th-1.1*s,ez-Math.cos(a)*0.5],
-          [ex-Math.sin(a)*0.5,y+th-1.3*s,ez+Math.cos(a)*0.5],shade(fc,0.92+i*0.02));
+    const p0=[x,y+th+0.4*s,z],p1=[ex+Math.sin(a)*0.5,y+th-1.1*s,ez-Math.cos(a)*0.5],
+          p2=[ex-Math.sin(a)*0.5,y+th-1.3*s,ez+Math.cos(a)*0.5];
+    b.tri(p0,p1,p2,shade(fc,0.92+i*0.02));
+    b.tri(p0,p2,p1,shade(fc,0.80+i*0.02));
   }
   b.cyl(x,y+th-0.3*s,z,0.45*s,0.3*s,0.7*s,6,0x6a5a2a);
   addCollider(x,z,0.45*s,0.45*s,y+2*s,y,"tree");
@@ -1811,7 +1831,7 @@ function addParkedCar(x,z,rotY){
   b.box(x-Math.cos(rotY)*0.25,y+1.45,z+Math.sin(rotY)*0.25,2.0,0.6,1.76,0x3a4a52,{rotY:rotY,noTop:true});
   for(const sx of [1.45,-1.45])for(const sz of [0.92,-0.92]){
     const wx=x+Math.cos(rotY)*sx+Math.sin(rotY)*sz, wz=z-Math.sin(rotY)*sx+Math.cos(rotY)*sz;
-    b.cyl(wx,y+0.34,wz,0.34,0.34,0.24,6,0x1a1a18,{rotY:rotY+PI/2});
+    b.box(wx,y+0.33,wz,0.66,0.62,0.26,0x1a1a18,{rotY:rotY});
   }
   addCollider(x,z,Math.abs(Math.cos(rotY))*2.2+Math.abs(Math.sin(rotY))*1,
                   Math.abs(Math.sin(rotY))*2.2+Math.abs(Math.cos(rotY))*1,y+1.3,y,"car");
@@ -2840,7 +2860,7 @@ function genScatter(){
     if(isReserved(p[0],p[1]))continue;
     reserve(p[0],p[1],44,40);
     const pb=B(p[0],p[1],"road");
-    pb.strip(p[0]-18,p[1],p[0]+18,p[1],34,0x8e8e88,0.04,8);
+    pb.strip(p[0]-18,p[1],p[0]+18,p[1],34,0xd0d0c8,0.04,8);
     const nb=B(p[0],p[1],"plain");
     for(let i=0;i<8;i++) nb.strip(p[0]-16+i*4.5,p[1]-15,p[0]-16+i*4.5,p[1]-3,0.3,0xe0dcc8,0.08,0);
     for(let i=0;i<8;i++) nb.strip(p[0]-16+i*4.5,p[1]+3,p[0]-16+i*4.5,p[1]+15,0.3,0xe0dcc8,0.08,0);
@@ -2854,7 +2874,7 @@ function genScatter(){
     const L=11,H=3.4,W=8;
     const cs=Math.cos(rot),sn=Math.sin(rot);
     const P=(fx,fy,fz)=>[j.x+fx*cs+fz*sn,y+fy,j.z-fx*sn+fz*cs];
-    b.quad(P(-L/2,0,-W/2),P(L/2,H,-W/2),P(L/2,H,W/2),P(-L/2,0,W/2),0xb0a074);
+    b.quad(P(-L/2,0,W/2),P(L/2,H,W/2),P(L/2,H,-W/2),P(-L/2,0,-W/2),0xb0a074);
     b.quad(P(L/2,H,-W/2),P(L/2,0,-W/2),P(L/2,0,W/2),P(L/2,H,W/2),0x8a7a54);
     b.tri(P(-L/2,0,-W/2),P(L/2,0,-W/2),P(L/2,H,-W/2),0x9a8a64);
     b.tri(P(-L/2,0,W/2),P(L/2,H,W/2),P(L/2,0,W/2),0x9a8a64);
@@ -2976,6 +2996,9 @@ function buildMarkers(){
   /* instanced pillar mesh */
   const g=new THREE.CylinderGeometry(1,1,1,10,1,true);
   g.translate(0,0.5,0);
+  /* white base colour so the per-instance colour comes through unchanged */
+  const white=new Float32Array(g.attributes.position.count*3).fill(1);
+  g.setAttribute("color",new THREE.Float32BufferAttribute(white,3));
   G.markerMesh=new THREE.InstancedMesh(g,MAT.marker,G.markers.length);
   G.markerMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   G.markerMesh.frustumCulled=false;
@@ -3018,7 +3041,10 @@ function updateMarkers(){
     const vis=d<150&&(!m.show||m.show())&&G.mode!=="interior";
     if(vis){
       const h=m.type==="relic"?2.4:(m.type==="mission"?9:6);
-      const r=m.type==="relic"?0.5:(m.type==="mission"?2.4:1.7);
+      let r=m.type==="relic"?0.5:(m.type==="mission"?2.4:1.7);
+      /* fade the pillar out as the camera enters it, or it fills the screen */
+      const dc=dist(G.cam.position.x,G.cam.position.z,m.x,m.z);
+      r*=clamp((dc-r*0.9)/(r*2.2),0,1);
       _mkP.set(m.x,surfaceY(m.x,m.z)+0.05,m.z);
       _mkS.set(r,h,r);
       _mkM.compose(_mkP,_mkQ,_mkS);
@@ -3056,7 +3082,10 @@ function updateMarkers(){
     G.objMarker.scale.set(s,1,s);G.objRing.scale.set(s,1,s);
     G.objMarker.visible=G.objRing.visible=true;
     G.objRing.rotation.z=G.clock*0.6;
-    G.objMarker.material.opacity=0.22+Math.sin(G.clock*3)*0.08;
+    const dc=dist(G.cam.position.x,G.cam.position.z,t.x,t.z);
+    const fade=clamp((dc-(t.r||6)*0.8)/((t.r||6)*1.4),0,1);
+    G.objMarker.material.opacity=(0.22+Math.sin(G.clock*3)*0.08)*fade;
+    G.objRing.material.opacity=0.72*Math.max(0.28,fade);
   }else{G.objMarker.visible=G.objRing.visible=false;}
 }
 
@@ -3422,6 +3451,7 @@ function updatePlayer(dt){
   if(S.health<=0)onPlayerDown();
 }
 function clampToWorld(v){
+  if(G.interior)return;          // interiors sit off the map on purpose
   const L=CFG.W-6;
   if(v.x<-L)v.x=-L;if(v.x>L)v.x=L;
   if(v.z<-L)v.z=-L;if(v.z>L)v.z=L;
@@ -4586,6 +4616,7 @@ function onPlayerDown(){
 }
 function respawnAtSafehouse(){
   const p=G.player;
+  if(G.interior)exitInterior();
   if(p.inVehicle)exitVehicle();
   const sh=SAFEHOUSES[S.lastSafehouse]||SAFEHOUSES.rh;
   p.pos.set(sh.x+6,heightAt(sh.x+6,sh.z+10),sh.z+10);
@@ -6287,6 +6318,8 @@ function enterInterior(kind,title,ctx){
   G.player.yaw=0;
   G.cam3.pos.set(it.exit.x,INT.y+3,it.exit.z+5);
   G.cam3.yaw=PI;
+  G.cam3.savedDist=G.cam3.userDist;
+  G.cam3.userDist=3.6;
   G.mode="interior";
   for(const v of G.vehicles.slice()) if(v.persist===false&&!v.mission&&!v.owned){}
   AUD.ui("door");
@@ -6305,6 +6338,7 @@ function exitInterior(){
   G.markerMesh.visible=true;G.relicMesh.visible=true;
   G.water.visible=true;G.sky.visible=true;
   if(G.savedFog){G.scene.fog.near=G.savedFog[0];G.scene.fog.far=G.savedFog[1];G.scene.fog.color.setHex(G.savedFog[2]);}
+  G.cam3.userDist=G.cam3.savedDist||null;
   const r=G.interiorReturn;
   if(r){G.player.pos.set(r.x,Math.max(r.y,heightAt(r.x,r.z)),r.z);G.player.yaw=r.yaw;}
   G.player.vel.set(0,0,0);
@@ -6315,13 +6349,14 @@ function exitInterior(){
 }
 /* ---------- shop UIs -------------------------------------------------------------- */
 function openOverlay(title,sub,build,hint){
+  const stacked=!!G.overlay;      // replacing an open panel, not nesting a new mode
   G.overlay={build:build};
   $("ov-title").textContent=title;
   $("ov-sub").textContent=sub||"";
   $("ov-hint").textContent=hint||"ESC or Q to leave";
   rebuildOverlay();
   show("overlay",true);
-  pushMode("overlay");
+  if(!stacked)pushMode("overlay");
   AUD.ui("open");
 }
 function rebuildOverlay(){
@@ -7448,8 +7483,16 @@ function updateObjectiveUI(){
     t.classList.toggle("warn",m.timer<10);
   }else show(t,false);
 }
+const _hudEls={},_hudTxt={};
+function hudEl(id){return _hudEls[id]||(_hudEls[id]=$(id));}
+function setText(id,str,html){
+  if(_hudTxt[id]===str)return;
+  _hudTxt[id]=str;
+  const e=hudEl(id);
+  if(html)e.innerHTML=str;else e.textContent=str;
+}
 function updateHUD(){
-  $("money").textContent=money(S.money);
+  setText("money",money(S.money));
   const hp=clamp(S.health/S.maxHealth,0,1),st=clamp(S.stamina/S.maxStamina,0,1);
   $("hud-top-right").querySelector(".meter.hp i").style.width=(hp*100).toFixed(1)+"%";
   $("hud-top-right").querySelector(".meter.st i").style.width=(st*100).toFixed(1)+"%";
@@ -7459,15 +7502,15 @@ function updateHUD(){
   const hrs=S.time*24;
   const h=Math.floor(hrs),mn=Math.floor((hrs-h)*60);
   const d=districtAt(G.player.pos.x,G.player.pos.z);
-  $("clock").innerHTML=(h<10?"0":"")+h+":"+(mn<10?"0":"")+mn+" &middot; <span class='dist'>"+
-    (G.interior?G.interior.title:(isUnlocked(d)?d.name:d.name+" (CLOSED)"))+"</span>";
+  setText("clock",(h<10?"0":"")+h+":"+(mn<10?"0":"")+mn+" &middot; <span class='dist'>"+
+    (G.interior?G.interior.title:(isUnlocked(d)?d.name:d.name+" (CLOSED)"))+"</span>",true);
   const v=G.player.inVehicle;
   show("veh-info",!!v);
   if(v){
-    $("veh-name").textContent=v.spec.name;
+    setText("veh-name",v.spec.name);
     const mph=Math.abs(v.vf)*2.2;
-    $("speedo").innerHTML=Math.round(mph)+"<small> MPH</small>";
-    $("gear").textContent=v.health<=0?"ENGINE DEAD":(v.vf<-0.6?"GEAR R":(Math.abs(v.vf)<0.6?"GEAR N":"GEAR D"));
+    setText("speedo",Math.round(mph)+"<small> MPH</small>",true);
+    setText("gear",v.health<=0?"ENGINE DEAD":(v.vf<-0.6?"GEAR R":(Math.abs(v.vf)<0.6?"GEAR N":"GEAR D")));
     $("veh-dmg").querySelector("i").style.width=(clamp(v.health/v.maxHealth,0,1)*100).toFixed(0)+"%";
   }
   /* interaction prompt */
@@ -7497,8 +7540,8 @@ function updateHUD(){
       else pr="<kbd>E</kbd> get out";
     }
   }
-  const pe=$("prompt");
-  if(pr){pe.innerHTML=pr;show(pe,true);}else show(pe,false);
+  const pe=hudEl("prompt");
+  if(pr){setText("prompt",pr,true);show(pe,true);}else show(pe,false);
 }
 function missionCompleteScreen(def,pay,rep,cb){
   bigMessage("MISSION PASSED",def.title);
@@ -7837,11 +7880,12 @@ const AUD={
 function saveGame(silent){
   try{
     const p=G.player;
+    const r=G.interior&&G.interiorReturn?G.interiorReturn:null;
     const data={
       v:2,t:Date.now(),
       S:S,
-      pos:[p.pos.x,p.pos.y,p.pos.z],yaw:p.yaw,
-      veh:p.inVehicle?{type:p.inVehicle.type,color:p.inVehicle.color,mods:p.inVehicle.mods}:null,
+      pos:r?[r.x,r.y,r.z]:[p.pos.x,p.pos.y,p.pos.z],yaw:r?r.yaw:p.yaw,
+      veh:(!r&&p.inVehicle)?{type:p.inVehicle.type,color:p.inVehicle.color,mods:p.inVehicle.mods}:null,
       mission:G.mission?G.mission.def.id:null
     };
     localStorage.setItem(CFG.SAVE_KEY,JSON.stringify(data));
@@ -7997,6 +8041,7 @@ function showScreen(id){
     show(s,s===id);
 }
 function goTitle(){
+  if(G.interior)exitInterior();
   showScreen("screen-title");
   show("hud",false);
   showObjective(false);
@@ -8273,6 +8318,42 @@ function runSelfTests(verbose){
   const fails=[],warns=[];
   const ck=(cond,msg)=>{if(!cond)fails.push(msg);};
   const wk=(cond,msg)=>{if(!cond)warns.push(msg);};
+  /* geometry emitters must wind their faces outward, or everything lights wrong */
+  (function(){
+    const probe=(name,fn,centre)=>{
+      const mb=new MeshBuilder();
+      fn(mb);
+      let inward=0;
+      for(let i=0;i<mb.p.length;i+=3){
+        const px=mb.p[i]-centre[0],py=mb.p[i+1]-centre[1],pz=mb.p[i+2]-centre[2];
+        if(px*mb.n[i]+py*mb.n[i+1]+pz*mb.n[i+2]<-0.0001)inward++;
+      }
+      ck(inward===0,name+": "+inward+" of "+(mb.p.length/3)+" vertices face inward (winding is reversed)");
+    };
+    probe("box",     mb=>mb.box(0,0,0,2,2,2,0xffffff,{bottom:true}),[0,0,0]);
+    probe("cylinder",mb=>mb.cyl(0,0,0,1,1,2,10,0xffffff,{bottom:true}),[0,0,0]);
+    probe("cone",    mb=>mb.cyl(0,0,0,1,0.02,2,10,0xffffff,{bottom:true}),[0,-0.4,0]);
+    probe("roof X",  mb=>mb.roof(0,0,0,4,4,2,0xffffff,true),[0,0.8,0]);
+    probe("roof Z",  mb=>mb.roof(0,0,0,4,4,2,0xffffff,false),[0,0.8,0]);
+    /* a ground quad, wound the way genTerrain and strip() emit them */
+    const flat=new MeshBuilder();
+    flat.quad([0,0,0],[0,0,1],[1,0,1],[1,0,0],0xffffff);
+    flat.strip(0,0,10,0,4,0xffffff,0,0);
+    for(let i=1;i<flat.n.length;i+=3)
+      ck(flat.n[i]>0.9,"ground geometry normal points down (index "+i+")");
+  })();
+  /* the baked world must not be mostly downward-facing either */
+  (function(){
+    let down=0,tot=0;
+    G.chunks.forEach(ch=>{
+      for(const m of ch.meshes){
+        const n=m.geometry.getAttribute("normal");
+        if(!n)return;
+        for(let i=0;i<n.count;i+=97){tot++;if(n.getY(i)<-0.85)down++;}
+      }
+    });
+    wk(tot===0||down/tot<0.30,"a lot of baked world geometry faces downward ("+down+"/"+tot+")");
+  })();
   /* world basics */
   ck(G.chunks.size>0,"no static chunks were baked");
   ck(G.graph.nodes.length>40,"road graph is too small: "+G.graph.nodes.length);
@@ -8444,7 +8525,7 @@ window.SUNRIDGE={G:G,S:S,CFG:CFG,LOC:LOC,MISSIONS:MISSIONS,ACTIVITIES:ACTIVITIES
   districtAt:districtAt,collectRelic:collectRelic,checkLevelUps:checkLevelUps,
   shopGarage:shopGarage,shopDealer:shopDealer,shopClothing:shopClothing,shopBarber:shopBarber,
   shopFood:shopFood,shopStore:shopStore,shopGym:shopGym,shopSafehouse:shopSafehouse,
-  teleport:(x,z)=>{G.player.pos.set(x,heightAt(x,z)+0.5,z);if(G.player.inVehicle)exitVehicle();},
+  teleport:(x,z)=>{if(G.player.inVehicle)exitVehicle();G.player.pos.set(x,surfaceY(x,z)+0.5,z);G.player.vel.set(0,0,0);},
   give:n=>{S.money+=n||1000;},
   unlockAll:()=>{for(const d of DISTRICTS)if(d.lock)S.unlocked[d.lock]=true;refreshGates();notify("ALL DISTRICTS OPEN","good");},
   skipTo:n=>{S.missionIdx=clamp(n|0,0,MISSIONS.length);notify("STORY SET TO MISSION "+(S.missionIdx+1),"info");},

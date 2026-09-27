@@ -678,7 +678,7 @@ function buildTextures(){
     for(let gy=0;gy<4;gy++)for(let gx=0;gx<4;gx++){
       const ox=gx*16,oy=gy*16;
       x.fillStyle="#9c988c";x.fillRect(ox+2,oy+2,12,12);      // frame
-      x.fillStyle=hash2(gx,gy)>0.5?"#4e5a63":"#3f4a52";       // glass
+      x.fillStyle=hash2(gx,gy)>0.5?"#64737f":"#56646f";       // glass
       x.fillRect(ox+3,oy+3,10,10);
       x.fillStyle="rgba(255,255,255,0.20)";x.fillRect(ox+3,oy+3,10,3);
       x.fillStyle="rgba(0,0,0,0.25)";x.fillRect(ox+8,oy+3,1,10);
@@ -1290,9 +1290,14 @@ function terrainColor(x,z){
   const d=districtAt(x,z);
   let c=d.g;
   const h=heightAt(x,z);
-  if(h<CFG.WATER_Y+0.5) c=mixHex(0x8d8562,0x39544e,clamp01((CFG.WATER_Y-h)/8));
-  else if(h<CFG.WATER_Y+4.5) c=mixHex(0xc9ba8c,c,clamp01((h-CFG.WATER_Y-0.5)/4));
-  if(h>24) c=mixHex(c,0x82805c,clamp01((h-24)/26));
+  if(h<CFG.WATER_Y+0.5){
+    c=mixHex(0x8d8562,0x39544e,clamp01((CFG.WATER_Y-h)/8));      // wet sand down into the sea bed
+  }else{
+    /* sand belongs to the northern shoreline, not to every flat square in the county */
+    const coast=smooth((-424-z)/64);
+    if(coast>0.01) c=mixHex(c,0xc9ba8c,coast*clamp01(1-(h-CFG.WATER_Y-0.5)/6));
+    if(h>24) c=mixHex(c,0x82805c,clamp01((h-24)/26));
+  }
   const n=hash2(Math.floor(x*0.24)+911,Math.floor(z*0.24)+17);
   return shade(c,0.93+n*0.15);
 }
@@ -1978,7 +1983,7 @@ function addHouse(x,z,w,d,rng,rotY){
   const roofc=RP([0x6a4436,0x4a4a52,0x7a5a3a,0x3a4a42,0x8a5a3a]);
   const pb=B(x,z,"plain"),fb=B(x,z,"facade");
   const h=rng()>0.68?5.8:3.4;
-  fb.box(x,h/2,z,w,h,d,col,{uv:16,noTop:true,rotY:rotY});
+  fb.box(x,h/2,z,w,h,d,col,{uv:11,noTop:true,rotY:rotY});
   pb.roof(x,h,z,w,d,1.9,roofc,w>=d);
   /* porch */
   const px=Math.sin(rotY)*(d/2+1.1),pz=Math.cos(rotY)*(d/2+1.1);
@@ -1989,7 +1994,7 @@ function addHouse(x,z,w,d,rng,rotY){
   /* garage */
   if(rng()>0.4){
     const gx=x+Math.cos(rotY)*(w/2+2.6),gz=z-Math.sin(rotY)*(w/2+2.6);
-    fb.box(gx,1.5,gz,4.6,3.0,5.0,shade(col,0.94),{uv:16,noTop:true,rotY:rotY});
+    fb.box(gx,1.5,gz,4.6,3.0,5.0,shade(col,0.94),{uv:11,noTop:true,rotY:rotY});
     pb.roof(gx,3.0,gz,4.6,5.0,1.0,roofc,false);
     pb.box(gx,1.25,gz+Math.cos(rotY)*2.55+Math.sin(rotY)*0,1.15*3,2.5,0.18,0xbdb5a0,{rotY:rotY});
     addCollider(gx,gz,2.5,2.7,3.2,0,"bld");
@@ -2006,11 +2011,11 @@ function addVilla(x,z,rng){
   const y=minTerrainIn(x,z,w+7,d+7)+0.35;
   pb.box(x,y-0.9,z,w+7,2.4,d+7,0xb0a894,{bottom:true});
   addCollider(x,z,(w+7)/2,(d+7)/2,y+0.3,-40,"walk");
-  fb.box(x,y+2.6,z,w,4.6,d,col,{uv:16,noTop:true});
+  fb.box(x,y+2.6,z,w,4.6,d,col,{uv:11,noTop:true});
   pb.box(x,y+5.05,z,w+0.6,0.4,d+0.6,shade(col,0.8),{bottom:false});
   pb.box(x,y+0.45,z+(d/2+1.4),3.2,0.3,2.4,0xc8c0ac,{bottom:false});
   if(rng()>0.5){
-    fb.box(x-w*0.2,y+6.6,z,w*0.55,3.4,d*0.7,shade(col,1.04),{uv:16,noTop:true});
+    fb.box(x-w*0.2,y+6.6,z,w*0.55,3.4,d*0.7,shade(col,1.04),{uv:11,noTop:true});
     pb.box(x-w*0.2,y+8.45,z,w*0.55+0.5,0.4,d*0.7+0.5,shade(col,0.8),{bottom:false});
   }
   /* pool */
@@ -2069,7 +2074,7 @@ function addGasStation(x,z,rotY){
   const y=heightAt(x,z),pb=B(x,z,"plain"),fb=B(x,z,"facade");
   /* forecourt */
   pb.box(x,y+0.06,z,26,0.12,20,0xa8a49c,{bottom:false});
-  fb.box(x-8,y+2.2,z-6,9,4.4,7,0xe0d4b0,{uv:16,noTop:true,rotY:rotY});
+  fb.box(x-8,y+2.2,z-6,9,4.4,7,0xe0d4b0,{uv:11,noTop:true,rotY:rotY});
   pb.box(x-8,y+4.6,z-6,9.6,0.5,7.6,0xb03a12,{bottom:false});
   addSign(x-8,y+3.4,z-2.4,7,1.6,0,"fuel");
   /* canopy */
@@ -2089,7 +2094,7 @@ function addDesertBuilding(x,z,rng){
   const type=rng();
   if(type<0.34){ /* motel */
     const w=22,d=8;
-    fb.box(x,y+1.9,z,w,3.8,d,0xd8c8a0,{uv:16,noTop:true});
+    fb.box(x,y+1.9,z,w,3.8,d,0xd8c8a0,{uv:11,noTop:true});
     pb.box(x,y+3.95,z,w+0.8,0.4,d+0.8,0x8a5a3a,{bottom:false});
     for(let i=0;i<5;i++) pb.box(x-w/2+3+i*4,y+1.2,z+d/2+0.08,1.2,2.4,0.16,0x5a3a2a,{});
     pb.box(x,y+1.6,z+d/2+2.2,w*0.9,0.2,1.2,0x8a5a3a,{bottom:true});
@@ -2098,7 +2103,7 @@ function addDesertBuilding(x,z,rng){
     pb.cyl(x-w/2-2,y+3,z+2,0.2,0.2,6,5,0x6a5a48);
     addCollider(x,z,w/2,d/2,y+3.8,y,"bld");
   }else if(type<0.62){ /* roadside diner / store */
-    fb.box(x,y+2.1,z,12,4.2,9,RP([0xd0c0a0,0xc8d0c0,0xe0d0b0]),{uv:16,noTop:true});
+    fb.box(x,y+2.1,z,12,4.2,9,RP([0xd0c0a0,0xc8d0c0,0xe0d0b0]),{uv:11,noTop:true});
     pb.box(x,y+4.45,z,12.6,0.5,9.6,0x9a6a3a,{bottom:false});
     pb.box(x,y+2.4,z+4.6,10,2.2,0.2,0x3a4a52,{});
     addSign(x,y+5.6,z+4.4,7,1.8,0,RP(["burger","shop","parts"]));
@@ -2116,7 +2121,7 @@ function addTownShop(x,z,w,d,rng,rotY){
   const col=RP([0xd8c8a8,0xc8b490,0xb8c0a8,0xd0b8a0,0xe0d8c0]);
   const fb=B(x,z,"facade"),pb=B(x,z,"plain");
   const h=rng()>0.6?7:4.4;
-  fb.box(x,y+h/2,z,w,h,d,col,{uv:15,noTop:true,rotY:rotY});
+  fb.box(x,y+h/2,z,w,h,d,col,{uv:11,noTop:true,rotY:rotY});
   /* false front */
   pb.box(x,y+h+0.9,z+Math.cos(rotY)*(d/2-0.2),w+0.5,1.8,0.5,shade(col,0.88),{rotY:rotY});
   pb.box(x,y+h+0.2,z,w+0.5,0.4,d+0.5,shade(col,0.7),{bottom:false});
@@ -2135,7 +2140,7 @@ function addShoreBuilding(x,z,w,d,rng){
   const col=RP([0xe8e0c8,0xd8d8d0,0xf0e4c0,0xc8d8d8]);
   const fb=B(x,z,"facade"),pb=B(x,z,"plain");
   const h=4.5+rng()*5;
-  fb.box(x,y+h/2,z,w,h,d,col,{uv:16,noTop:true});
+  fb.box(x,y+h/2,z,w,h,d,col,{uv:12,noTop:true});
   pb.box(x,y+h+0.25,z,w+0.6,0.5,d+0.6,shade(col,0.8),{bottom:false});
   for(let i=0;i<Math.floor(w/5);i++)
     pb.box(x-w/2+3+i*5,y+1.1,z+d/2+0.5,2.6,0.2,1.2,RP([0x2a7a8a,0xc04a3a,0xd8a83a]),{bottom:true});
@@ -2309,7 +2314,7 @@ function genLandmarks(){
     const L=LOC.garage;reserve(L.x,L.z,54,50);
     const pb=B(L.x,L.z,"plain"),fb=B(L.x,L.z,"facade");
     pb.box(L.x,0.07,L.z+9,46,0.14,20,0x8e8e88,{bottom:false});
-    fb.box(L.x,3.3,L.z-6,30,6.6,15,0xc8bca0,{uv:16,noTop:true});
+    fb.box(L.x,3.3,L.z-6,30,6.6,15,0xc8bca0,{uv:12,noTop:true});
     pb.box(L.x,6.8,L.z-6,31,0.6,16,0x7a5a3a,{bottom:false});
     for(let i=0;i<3;i++) pb.box(L.x-9+i*9,2.4,L.z+1.6,7.4,4.8,0.25,0x5a6a72,{});
     addSign(L.x,7.9,L.z+1.4,14,2.4,0,"garage");
@@ -2335,7 +2340,7 @@ function genLandmarks(){
   (function(){
     const L=LOC.diner;reserve(L.x,L.z,48,44);
     const pb=B(L.x,L.z,"plain"),fb=B(L.x,L.z,"facade");
-    fb.box(L.x,2.6,L.z-4,26,5.2,14,0xe4dcc4,{uv:16,noTop:true});
+    fb.box(L.x,2.6,L.z-4,26,5.2,14,0xe4dcc4,{uv:11,noTop:true});
     pb.box(L.x,5.5,L.z-4,27,0.7,15,0xc03a2a,{bottom:false});
     pb.box(L.x,6.3,L.z-4,26,0.9,14.4,0xd8d4c8,{bottom:false});
     pb.box(L.x,2.4,L.z+3.2,22,2.6,0.25,0x3a4a52,{});
@@ -2361,7 +2366,7 @@ function genLandmarks(){
   for(const [L,sig,col] of shops){
     reserve(L.x,L.z,44,42);
     const pb=B(L.x,L.z,"plain"),fb=B(L.x,L.z,"facade");
-    fb.box(L.x,3.4,L.z-5,24,6.8,14,col,{uv:16,noTop:true});
+    fb.box(L.x,3.4,L.z-5,24,6.8,14,col,{uv:11,noTop:true});
     pb.box(L.x,7,L.z-5,25,0.6,15,shade(col,0.66),{bottom:false});
     pb.box(L.x,2.4,L.z+2.2,18,2.8,0.25,0x3a4a52,{});
     pb.box(L.x,1.3,L.z+2.1,2.8,2.6,0.3,shade(col,0.5),{});
@@ -2402,7 +2407,7 @@ function genLandmarks(){
     const L=LOC.deal;reserve(L.x,L.z,50,44);
     const pb=B(L.x,L.z,"plain"),fb=B(L.x,L.z,"facade");
     pb.box(L.x,0.07,L.z+7,42,0.14,18,0x9a9a94,{bottom:false});
-    fb.box(L.x,4,L.z-7,30,8,14,0xdce4ec,{uv:16,noTop:true});
+    fb.box(L.x,4,L.z-7,30,8,14,0xdce4ec,{uv:12,noTop:true});
     pb.box(L.x,8.3,L.z-7,31,0.6,15,0x101828,{bottom:false});
     pb.box(L.x,3,L.z-0.2,26,5.6,0.3,0x6a8aa8,{});
     addSign(L.x,9.4,L.z-0.4,16,2.6,0,"deal");
@@ -2467,7 +2472,7 @@ function genLandmarks(){
     reserve(L.x,L.z,40,40);
     const pb=B(L.x,L.z,"plain"),fb=B(L.x,L.z,"facade");
     const tall=L.id==="dt";
-    fb.box(L.x,tall?9:2.8,L.z-3,tall?20:16,tall?18:5.6,13,tall?0xb8a890:0xd8cfae,{uv:16,noTop:true});
+    fb.box(L.x,tall?9:2.8,L.z-3,tall?20:16,tall?18:5.6,13,tall?0xb8a890:0xd8cfae,{uv:tall?15:11,noTop:true});
     if(tall){pb.box(L.x,18.3,L.z-3,21,0.6,14,0x6a5a48,{bottom:false});}
     else pb.roof(L.x,5.6,L.z-3,16,13,2.2,0x6a4436,true);
     pb.box(L.x,0.25,L.z+4.4,4,0.5,2.4,0x9a9284,{bottom:true});
@@ -2480,7 +2485,7 @@ function genLandmarks(){
     reserve(L.x,L.z,44,40);
     const pb=B(L.x,L.z,"plain"),fb=B(L.x,L.z,"facade");
     const y=heightAt(L.x,L.z);
-    fb.box(L.x,y+2.8,L.z-4,22,5.6,12,0xe0d8c0,{uv:16,noTop:true});
+    fb.box(L.x,y+2.8,L.z-4,22,5.6,12,0xe0d8c0,{uv:11,noTop:true});
     pb.box(L.x,y+5.9,L.z-4,23,0.6,13,RP([0xc03a2a,0xd8a83a,0x2a7a8a]),{bottom:false});
     pb.box(L.x,y+2.4,L.z+2.2,16,2.6,0.25,0x3a4a52,{});
     pb.box(L.x,y+1.2,L.z+2.1,2.6,2.4,0.3,0x6a4a2a,{});
@@ -2515,7 +2520,7 @@ function genLandmarks(){
   (function(){
     const L=LOC.radio;reserve(L.x,L.z,56,56);
     const pb=B(L.x,L.z,"plain"),fb=B(L.x,L.z,"facade");
-    fb.box(L.x-14,3,L.z+10,16,6,12,0xc8c4b4,{uv:16,noTop:true});
+    fb.box(L.x-14,3,L.z+10,16,6,12,0xc8c4b4,{uv:11,noTop:true});
     pb.box(L.x-14,6.3,L.z+10,17,0.6,13,0x1a1030,{bottom:false});
     addSign(L.x-14,4.2,L.z+16.2,11,2.4,0,"radio");
     addCollider(L.x-14,L.z+10,8,6,6,0,"bld");
@@ -2564,9 +2569,9 @@ function genLandmarks(){
       pb.box(L.x,sy-0.6,sz,16,1.2,1.8,0xc0b8a6,{bottom:true});
       addCollider(L.x,sz,8,0.9,sy,-40,"walk");
     }
-    fb.box(L.x,y+4.6,L.z-6,40,8,22,0xe8e0c8,{uv:18,noTop:true});
+    fb.box(L.x,y+4.6,L.z-6,40,8,22,0xe8e0c8,{uv:13,noTop:true});
     pb.box(L.x,y+9,L.z-6,41,0.8,23,0x6a5a48,{bottom:false});
-    fb.box(L.x-14,y+12,L.z-6,16,7,20,0xe0d8c0,{uv:18,noTop:true});
+    fb.box(L.x-14,y+12,L.z-6,16,7,20,0xe0d8c0,{uv:13,noTop:true});
     pb.box(L.x-14,y+15.8,L.z-6,17,0.7,21,0x6a5a48,{bottom:false});
     for(let i=0;i<6;i++)pb.cyl(L.x-16+i*6.4,y+3.4,L.z+6.2,0.5,0.5,6.8,8,0xf0ece0);
     pb.box(L.x,y+7.1,L.z+6.2,40,0.7,3,0xf0ece0,{bottom:true});
@@ -2647,9 +2652,9 @@ function genLandmarks(){
   (function(){
     const L=LOC.church;reserve(L.x,L.z,54,48);
     const y=heightAt(L.x,L.z),pb=B(L.x,L.z,"plain"),fb=B(L.x,L.z,"facade");
-    fb.box(L.x,y+3.4,L.z,16,6.8,24,0xe8e0cc,{uv:16,noTop:true});
+    fb.box(L.x,y+3.4,L.z,16,6.8,24,0xe8e0cc,{uv:11,noTop:true});
     pb.roof(L.x,y+6.8,L.z,16,24,4.2,0x8a6a4a,false);
-    fb.box(L.x,y+5,L.z+13.6,6,10,4,0xe8e0cc,{uv:16,noTop:true});
+    fb.box(L.x,y+5,L.z+13.6,6,10,4,0xe8e0cc,{uv:11,noTop:true});
     pb.roof(L.x,y+10,L.z+13.6,6,4,1.6,0x8a6a4a,true);
     pb.cyl(L.x,y+13.4,L.z+13.6,0.9,0.05,5.4,4,0xd8cfb8);
     pb.box(L.x,y+1.6,L.z+15.7,2.2,3.2,0.2,0x6a4a2a,{});
